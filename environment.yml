@@ -4,25 +4,75 @@ channels:
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
-  - ca-certificates=2020.6.20=hecda079_0
-  - certifi=2020.6.20=py36h9f0ad1d_0
+  - argon2-cffi=20.1.0=py36h8c4c3a4_1
+  - attrs=20.1.0=pyh9f0ad1d_0
+  - backports=1.0=py_2
+  - backports.functools_lru_cache=1.6.1=py_0
+  - bleach=3.1.5=pyh9f0ad1d_0
+  - ca-certificates=2020.6.24=0
+  - certifi=2020.6.20=py36_0
+  - cffi=1.11.5=py36_0
   - cloudpickle=1.2.0=py_0
+  - decorator=4.4.2=py_0
+  - defusedxml=0.6.0=py_0
+  - entrypoints=0.3=py36h9f0ad1d_1001
+  - importlib-metadata=1.7.0=py36h9f0ad1d_0
+  - importlib_metadata=1.7.0=0
+  - ipykernel=5.3.4=py36h95af2a2_0
+  - ipython=5.8.0=py36_1
+  - ipython_genutils=0.2.0=py_1
+  - jinja2=2.11.2=pyh9f0ad1d_0
+  - jsonschema=3.2.0=py36h9f0ad1d_1
+  - jupyter_client=6.1.6=py_0
+  - jupyter_core=4.6.3=py36h9f0ad1d_1
   - ld_impl_linux-64=2.33.1=h53a641e_7
   - libedit=3.1.20191231=h14c3975_1
   - libffi=3.3=he6710b0_2
   - libgcc-ng=9.1.0=hdf63c60_0
+  - libsodium=1.0.18=h516909a_0
   - libstdcxx-ng=9.1.0=hdf63c60_0
+  - markupsafe=1.1.1=py36h8c4c3a4_1
+  - mistune=0.8.4=py36h8c4c3a4_1001
+  - nb_conda_kernels=2.2.3=py36_0
+  - nbconvert=5.6.1=py36h9f0ad1d_1
+  - nbformat=5.0.7=py_0
   - ncurses=6.2=he6710b0_1
-  - openssl=1.1.1g=h516909a_1
+  - notebook=6.1.3=py36h9f0ad1d_0
+  - openssl=1.1.1g=h7b6447c_0
+  - packaging=20.4=pyh9f0ad1d_0
+  - pandoc=2.10.1=h516909a_0
+  - pandocfilters=1.4.2=py_1
+  - pexpect=4.8.0=py36h9f0ad1d_1
+  - pickleshare=0.7.5=py36h9f0ad1d_1001
   - pip=20.2.2=py36_0
+  - prometheus_client=0.8.0=pyh9f0ad1d_0
+  - prompt_toolkit=1.0.15=py_1
+  - ptyprocess=0.6.0=py_1001
+  - pycparser=2.20=pyh9f0ad1d_2
+  - pygments=2.6.1=py_0
+  - pyparsing=2.4.7=pyh9f0ad1d_0
+  - pyrsistent=0.16.0=py36h8c4c3a4_0
   - python=3.6.10=h7579374_2
+  - python-dateutil=2.8.1=py_0
   - python_abi=3.6=1_cp36m
+  - pyzmq=19.0.2=py36h9947dbf_0
   - readline=8.0=h7b6447c_0
+  - send2trash=1.5.0=py_0
   - setuptools=49.6.0=py36_0
+  - simplegeneric=0.8.1=py_1
+  - six=1.15.0=pyh9f0ad1d_0
   - sqlite=3.33.0=h62c20be_0
+  - terminado=0.8.3=py36h9f0ad1d_1
+  - testpath=0.4.4=py_0
   - tk=8.6.10=hbc83047_0
+  - tornado=6.0.4=py36h8c4c3a4_1
+  - traitlets=4.3.3=py36h9f0ad1d_1
+  - wcwidth=0.2.5=pyh9f0ad1d_1
+  - webencodings=0.5.1=py_1
   - wheel=0.34.2=py36_0
   - xz=5.2.5=h7b6447c_0
+  - zeromq=4.3.2=he1b5a44_3
+  - zipp=3.1.0=py_0
   - zlib=1.2.11=h7b6447c_3
   - pip:
     - absl-py==0.10.0
@@ -34,7 +84,6 @@ dependencies:
     - grpcio==1.31.0
     - gym==0.15.7
     - h5py==2.10.0
-    - importlib-metadata==1.7.0
     - joblib==0.16.0
     - keras-applications==1.0.8
     - keras-preprocessing==1.1.2
@@ -44,7 +93,6 @@ dependencies:
     - protobuf==3.13.0
     - pyglet==1.5.0
     - scipy==1.5.2
-    - six==1.15.0
     - tensorboard==1.14.0
     - tensorflow==1.14.0
     - tensorflow-estimator==1.14.0
@@ -52,6 +100,5 @@ dependencies:
     - tqdm==4.48.2
     - werkzeug==1.0.1
     - wrapt==1.12.1
-    - zipp==3.1.0
 prefix: /home/manorzvi/anaconda3/envs/A2C_Visualization_env
 
