@@ -82,7 +82,6 @@ dependencies:
     - gast==0.4.0
     - google-pasta==0.2.0
     - grpcio==1.31.0
-    - gym==0.15.7
     - h5py==2.10.0
     - joblib==0.16.0
     - keras-applications==1.0.8
@@ -97,6 +96,7 @@ dependencies:
     - tensorflow==1.14.0
     - tensorflow-estimator==1.14.0
     - termcolor==1.1.0
+    - threadpoolctl==2.1.0
     - tqdm==4.48.2
     - werkzeug==1.0.1
     - wrapt==1.12.1
