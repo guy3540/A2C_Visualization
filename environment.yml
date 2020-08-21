@@ -21,5 +21,11 @@ dependencies:
   - wheel=0.34.2=py36_0
   - xz=5.2.5=h7b6447c_0
   - zlib=1.2.11=h7b6447c_3
+  - pip:
+    - cloudpickle==1.3.0
+    - future==0.18.2
+    - numpy==1.19.1
+    - pyglet==1.5.0
+    - scipy==1.5.2
 prefix: /home/manorzvi/anaconda3/envs/A2C_Visualization_env
 
