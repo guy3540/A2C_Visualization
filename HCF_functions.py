@@ -318,35 +318,35 @@ def get_max_tunnel_depth(obs=None, method=cv2.TM_CCOEFF_NORMED):
     return max_depth, tunnel_open, all_depths
 
 
-def get_padel_position(obs=None, method=cv2.TM_CCOEFF_NORMED):
-    """
-    return the avg. location of the padel over 4 consequtive observations
-    obs: np.ndarray.shape = (3,74). obs is the buttom part of the image, where the padel is.
-                                    we assume only the last frame in each observation as the
-                                    relevant for the current location (the others are there to give the
-                                    network a sense of motion).
-    method: string in [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
-                       cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
-    """
-    assert obs is not None
-    assert obs.shape[0] == 3 and obs.shape[1] == 74
-    assert obs.dtype in [np.uint8, np.float32]
-    assert method in [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
-                      cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
-
-    padel_filter = np.array(([44, 44, 44, 44, 44],
-                             [110, 110, 110, 110, 110],
-                             [22, 22, 22, 22, 22]), dtype=np.uint8)
-    w, h = padel_filter.shape[::-1]
-
-    res = cv2.matchTemplate(obs, padel_filter, method)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-    # If the method is TM_SQDIFF or TM_SQDIFF_NORMED, take minimum
-    if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
-        center = min_loc + np.array([w / 2, h / 2])
-    else:
-        center = max_loc + np.array([w / 2, h / 2])
-
-    center += [5, 75]
-    print(max_loc, center)
+# Find the paddle position in a Breakout-v4 gym environment
+# Assume observation size of (210, 160)
+def get_paddle_position(obs=None, method=cv2.TM_CCOEFF_NORMED):
+    assert(any([obs.shape[0] == 210, obs[1] == 160]))
+    # paddle is always found in the lower part of the observation
+    # set desired area to look for paddle
+    area_X_start = 8
+    area_X_end = 152
+    area_Y_start = 185
+    area_Y_end = 195
+    img = obs[area_Y_start:area_Y_end, area_X_start:area_X_end].copy()
+    # perform threshold on the image
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    et, thresh = cv2.threshold(gray, 50, 255, 1)
+    pad_size = 20
+    thresh = np.pad(thresh, (pad_size, pad_size), 'constant', constant_values=(255, 255))
+    contours, h = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    max_cnt_area = 0
+    center = np.array([(area_Y_start+area_Y_end)/2, (area_X_start+area_X_end)/2])
+    for cnt in contours:
+        approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+        # print("contour", cnt.shape)
+        # if there's a containig ellipse to the contour, we'll extract its center
+        if all([len(approx) >= 8, cv2.contourArea(cnt) > max_cnt_area]):
+            max_cnt_area = cv2.contourArea(cnt)
+            M = cv2.moments(cnt)
+            cX = int(M["m10"] / M["m00"]) - pad_size  # X center
+            cY = int(M["m01"] / M["m00"]) - pad_size  # Y center
+            # print("square", cX, cY)
+            cv2.drawContours(img, [cnt], 0, (0, 0, 255), -1)
+            center = np.array([cY+area_Y_start, cX+area_X_start])
     return center
