@@ -283,7 +283,7 @@ def get_digit(obs=None, which=None, method=cv2.TM_CCOEFF_NORMED):
             digit = int(dig)
     return digit
 
-
+# very slow function
 def get_max_tunnel_depth(obs=None, method=cv2.TM_CCOEFF_NORMED):
     """
     return the avg. location of the padel over 4 consequtive observations
@@ -295,33 +295,34 @@ def get_max_tunnel_depth(obs=None, method=cv2.TM_CCOEFF_NORMED):
                        cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
     """
     assert obs is not None
-    assert obs.shape[0] == 14 and obs.shape[1] == 75
-    all_depths = []
-    for i in range(obs.shape[1]):
-        depth_per_column = 0
-        for j in reversed(range(obs.shape[0])):
-            if obs[j, i] != 0:
-                break
-            else:
-                depth_per_column += 1
-        all_depths.append(depth_per_column)
-
-    if len([x for x in all_depths if x != 0]) > 0:
-        max_depth = max(all_depths)
-    else:
+    assert (any([obs.shape[0] == 210, obs[1] == 160, obs[2] == 3]))
+    # assert obs.shape[0] == 14 and obs.shape[1] == 75
+    brick_area = obs[57:93, 8:-8]
+    gray = cv2.cvtColor(brick_area, cv2.COLOR_BGR2GRAY)
+    et, thresh = cv2.threshold(gray, 50, 255, 1)
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:    # contours is empty - no bricks broken at all
         max_depth = 0
-
-    #     print(all_depths)
-
-    tunnel_open = max_depth == obs.shape[0]
-
+        tunnel_open = False
+        all_depths = np.zeros(brick_area.shape[1])
+        return max_depth, tunnel_open, all_depths
+    h_max = 0
+    longest_col = contours[0]
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if h > h_max:
+            longest_col = cnt
+    x, y, w, h = cv2.boundingRect(cnt)
+    max_depth = h
+    tunnel_open = (h >= brick_area.shape[0])
+    all_depths = thresh.sum(axis=0) / 255
     return max_depth, tunnel_open, all_depths
 
 
 # Find the paddle position in a Breakout-v4 gym environment
 # Assume observation size of (210, 160)
 def get_paddle_position(obs=None, method=cv2.TM_CCOEFF_NORMED):
-    assert(any([obs.shape[0] == 210, obs[1] == 160]))
+    assert(any([obs.shape[0] == 210, obs[1] == 160, obs[2] == 3]))
     # paddle is always found in the lower part of the observation
     # set desired area to look for paddle
     area_X_start = 8

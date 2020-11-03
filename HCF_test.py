@@ -7,7 +7,7 @@ import codecs
 import json
 import cv2
 from matplotlib import pyplot as plt
-from HCF_functions import get_paddle_position
+from HCF_functions import get_paddle_position, get_max_tunnel_depth
 
 
 # This wrapper extracts Hand Crafted Features from gym observations
@@ -34,7 +34,11 @@ class HCFgymWrapper(gym.ObservationWrapper):
     def observation(self, obs):
         # modify obs
         for func in self.FuncList:
-            self.Outputs[func.__name__].append(func(obs).tolist())
+            res = func(obs)
+            if isinstance(res, np.ndarray):
+                self.Outputs[func.__name__].append(res.tolist())
+            else:
+                self.Outputs[func.__name__].append(res)
         return obs
 
     # close function is called when the gym environment is closed and saves the results
@@ -45,7 +49,8 @@ class HCFgymWrapper(gym.ObservationWrapper):
         return super().close()
 
 FuncList = []
-FuncList.append(get_paddle_position)
+# FuncList.append(get_paddle_position)
+FuncList.append(get_max_tunnel_depth)
 
 env = gym.make("Breakout-v4")
 Wrap = HCFgymWrapper(env, FuncList=FuncList)
@@ -64,15 +69,18 @@ rows = 4
 cols = 4
 fig, axs = plt.subplots(rows, cols)
 plt.subplots_adjust(hspace=0.4)
-fig.suptitle('observation and paddle location')
+fig.suptitle('observation and tunnel depth')
 
 for i in range(rows*cols):
     rnd = np.round(np.random.randint(T, size=1))[0]
     im = obs_list[rnd]
+    max_depth, tunnel_open, all_depths = get_max_tunnel_depth(im)
     cY, cX = get_paddle_position(im)
     im[int(cY)-2:int(cY)+2, int(cX)-2:int(cX)+2, :] = 255
     axs.ravel()[i].imshow(im)
-    axs.ravel()[i].set_title("#obs: " + str(rnd) + " paddle location: " + str(get_paddle_position(obs_list[rnd])))
+    axs.ravel()[i].set_title("#obs: " + str(rnd) + " max_depth: " + str(max_depth) +
+                             (" tunnel is open" if tunnel_open else " tunnel is closed"))
+    # axs.ravel()[i].set_title("#obs: " + str(rnd) + " paddle location: " + str(get_paddle_position(obs_list[rnd])))
 plt.show()
 
 # Wrap.close()
