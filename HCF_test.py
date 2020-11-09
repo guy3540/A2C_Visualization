@@ -7,7 +7,7 @@ import codecs
 import json
 import cv2
 from matplotlib import pyplot as plt
-from HCF_functions import get_paddle_position, get_max_tunnel_depth
+from HCF_functions import get_paddle_position, get_max_tunnel_depth, get_ball_position
 
 
 # This wrapper extracts Hand Crafted Features from gym observations
@@ -65,23 +65,36 @@ for t in range(T):
     if dones:
         s_t = Wrap.reset()
 
-rows = 4
-cols = 4
+# rnd = np.round(np.random.randint(T, size=1))[0]
+# im = obs_list[rnd].copy()
+# cY, cX = get_ball_position(im)
+# im[int(cY)-2:int(cY)+2, int(cX)-2:int(cX)+2, :] = 150
+# plt.imshow(im)
+# plt.show()
+
+# *************** Uncomment to show results ***************
+rows = 2
+cols = 2
 fig, axs = plt.subplots(rows, cols)
 plt.subplots_adjust(hspace=0.4)
-fig.suptitle('observation and tunnel depth')
+fig.suptitle('observation and tunnel depth \n paddle in white and ball in gray')
 
 for i in range(rows*cols):
     rnd = np.round(np.random.randint(T, size=1))[0]
     im = obs_list[rnd]
     max_depth, tunnel_open, all_depths = get_max_tunnel_depth(im)
     cY, cX = get_paddle_position(im)
+    ballY, ballX = get_ball_position(im)
+    if all([ballY != 0, ballX != 0]):
+        im[int(ballY) - 2:int(ballY) + 2, int(ballX) - 2:int(ballX) + 2, :] = 150
     im[int(cY)-2:int(cY)+2, int(cX)-2:int(cX)+2, :] = 255
     axs.ravel()[i].imshow(im)
     axs.ravel()[i].set_title("#obs: " + str(rnd) + " max_depth: " + str(max_depth) +
                              (" tunnel is open" if tunnel_open else " tunnel is closed"))
-    # axs.ravel()[i].set_title("#obs: " + str(rnd) + " paddle location: " + str(get_paddle_position(obs_list[rnd])))
 plt.show()
+
+
+# *************** Uncomment to close and save results ***************
 
 # Wrap.close()
 #
