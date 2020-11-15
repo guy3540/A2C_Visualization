@@ -7,7 +7,7 @@ import codecs
 import json
 import cv2
 from matplotlib import pyplot as plt
-from HCF_functions import get_paddle_position, get_max_tunnel_depth, get_ball_position
+from HCF_functions import get_paddle_position, get_max_tunnel_depth, get_ball_position, get_digit
 
 
 # This wrapper extracts Hand Crafted Features from gym observations
@@ -19,6 +19,7 @@ class HCFgymWrapper(gym.ObservationWrapper):
         self.DstDir = DstDir
         self.resultsDir = os.path.join(self.DstDir, "results")
         self.Outputs = dict()
+        self.acc_reward = 0
         if not os.path.exists(self.DstDir):
             os.mkdir(self.DstDir)
             os.mkdir(os.path.join(self.resultsDir))
@@ -26,6 +27,7 @@ class HCFgymWrapper(gym.ObservationWrapper):
             os.mkdir(os.path.join(self.resultsDir))
         for func in self.FuncList:
             self.Outputs[func.__name__] = []
+        self.Outputs['Score'] = []
 
     # This function overrides the observation function of gym.
     # First, the function extracts hand-crafted features, by activating all the
@@ -40,6 +42,18 @@ class HCFgymWrapper(gym.ObservationWrapper):
             else:
                 self.Outputs[func.__name__].append(res)
         return obs
+
+    def step(self, action):
+        next_state, reward, done, info = self.env.step(action)
+
+        self.acc_reward += reward
+        self.Outputs['Score'].append(self.acc_reward)
+
+        return next_state, reward, done, info
+
+    def reset(self):
+        self.acc_reward = 0
+        return super().reset()
 
     # close function is called when the gym environment is closed and saves the results
     def close(self):
@@ -56,7 +70,7 @@ env = gym.make("Breakout-v4")
 Wrap = HCFgymWrapper(env, FuncList=FuncList)
 
 obs_list = []
-T = 500
+T = 5000
 s_t = Wrap.reset()
 for t in range(T):
     a_t = Wrap.action_space.sample()
@@ -67,9 +81,11 @@ for t in range(T):
 
 # rnd = np.round(np.random.randint(T, size=1))[0]
 # im = obs_list[rnd].copy()
-# cY, cX = get_ball_position(im)
-# im[int(cY)-2:int(cY)+2, int(cX)-2:int(cX)+2, :] = 150
-# plt.imshow(im)
+# area_Y_start = 0
+# area_Y_end = 17
+# numbers_area = im[area_Y_start:area_Y_end, :]
+# plt.imshow(obs_list[rnd])
+# plt.suptitle(Wrap.Outputs['Score'][rnd])
 # plt.show()
 
 # *************** Uncomment to show results ***************
@@ -77,7 +93,7 @@ rows = 2
 cols = 2
 fig, axs = plt.subplots(rows, cols)
 plt.subplots_adjust(hspace=0.4)
-fig.suptitle('observation and tunnel depth \n paddle in white and ball in gray')
+fig.suptitle('Hand crafted features \n paddle in white and ball in gray')
 
 for i in range(rows*cols):
     rnd = np.round(np.random.randint(T, size=1))[0]
@@ -90,7 +106,8 @@ for i in range(rows*cols):
     im[int(cY)-2:int(cY)+2, int(cX)-2:int(cX)+2, :] = 255
     axs.ravel()[i].imshow(im)
     axs.ravel()[i].set_title("#obs: " + str(rnd) + " max_depth: " + str(max_depth) +
-                             (" tunnel is open" if tunnel_open else " tunnel is closed"))
+                             (" tunnel is open" if tunnel_open else " tunnel is closed") +
+                             "\n" + "Score is: " + str(Wrap.Outputs['Score'][rnd]))
 plt.show()
 
 
