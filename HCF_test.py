@@ -63,9 +63,8 @@ class HCFgymWrapper(gym.ObservationWrapper):
         json.dump(self.Outputs, codecs.open(results_file, 'w', encoding='utf-8'))
         return super().close()
 
-FuncList = []
-# FuncList.append(get_paddle_position)
-FuncList.append(get_max_tunnel_depth)
+
+FuncList = [get_paddle_position, get_max_tunnel_depth, get_ball_position]
 
 env = gym.make("Breakout-v4")
 Wrap = HCFgymWrapper(env, FuncList=FuncList)
