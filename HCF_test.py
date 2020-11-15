@@ -5,7 +5,6 @@ import numpy as np
 from datetime import datetime
 import codecs
 import json
-import cv2
 from matplotlib import pyplot as plt
 from HCF_functions import get_paddle_position, get_max_tunnel_depth, get_ball_position
 
@@ -19,12 +18,13 @@ class HCFgymWrapper(gym.ObservationWrapper):
         self.DstDir = DstDir
         self.resultsDir = os.path.join(self.DstDir, "results")
         self.Outputs = dict()
-        self.acc_reward = 0
-        if not os.path.exists(self.DstDir):
+        self.acc_reward = 0  # Accumulated reward in a session. When the last life is lost, resetted to zero.
+        if not os.path.exists(self.DstDir):  # Create missing folders
             os.mkdir(self.DstDir)
             os.mkdir(os.path.join(self.resultsDir))
         elif not os.path.exists(os.path.join(self.resultsDir)):
             os.mkdir(os.path.join(self.resultsDir))
+        # Initiate lists of results for json compatibility
         for func in self.FuncList:
             self.Outputs[func.__name__] = []
         self.Outputs['Score'] = []
@@ -35,29 +35,21 @@ class HCFgymWrapper(gym.ObservationWrapper):
     #       functions in self.FuncList on the observation.
     # Then, it returns the observation as was seen by the agent.
     def observation(self, obs):
-        # modify obs
         for func in self.FuncList:
             res = func(obs)
-            if isinstance(res, np.ndarray):
-                self.Outputs[func.__name__].append(res.tolist())
-            else:
-                self.Outputs[func.__name__].append(res)
+            self.Outputs[func.__name__].append(res)
         return obs
 
+    # This function overrides the step function of gym, to allow extraction of the score and lives count.
+    # These are used as Hand Crafted Features.
     def step(self, action):
         next_state, reward, done, info = self.env.step(action)
         self.acc_reward += reward
-        if isinstance(self.acc_reward, np.ndarray):
-            self.Outputs['Score'].append(self.acc_reward.tolist())
-        else:
-            self.Outputs['Score'].append(self.acc_reward)
-
-        if isinstance(info['ale.lives'], np.ndarray):
-            self.Outputs['Lives'].append(info['ale.lives'].tolist())
-        else:
-            self.Outputs['Lives'].append(info['ale.lives'])
+        self.Outputs['Score'].append(self.acc_reward)
+        self.Outputs['Lives'].append(info['ale.lives'])
         return next_state, reward, done, info
 
+    # This function overrides the reset function of gym, to allow resetting of the score.
     def reset(self):
         self.acc_reward = 0
         return super().reset()
@@ -75,6 +67,7 @@ FuncList = [get_paddle_position, get_max_tunnel_depth, get_ball_position]
 env = gym.make("Breakout-v4")
 Wrap = HCFgymWrapper(env, FuncList=FuncList)
 
+# use random actions just to gather observations
 obs_list = []
 T = 5000
 s_t = Wrap.reset()
@@ -85,6 +78,7 @@ for t in range(T):
     if dones:
         s_t = Wrap.reset()
 
+# # show a single image and test
 # rnd = np.round(np.random.randint(T, size=1))[0]
 # im = obs_list[rnd].copy()
 # area_Y_start = 0
