@@ -41,6 +41,66 @@ def get_ball_position(obs=None):
     return center
     # return max_val, loc, area
 
+
+def get_max_tunnel_depth(obs=None, method=cv2.TM_CCOEFF_NORMED):
+    assert obs is not None
+    assert (any([obs.shape[0] == 210, obs[1] == 160, obs[2] == 3]))
+    # assert obs.shape[0] == 14 and obs.shape[1] == 75
+    brick_area = obs[57:93, 8:-8]
+    gray = cv2.cvtColor(brick_area, cv2.COLOR_BGR2GRAY)
+    et, thresh = cv2.threshold(gray, 50, 255, 1)
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:    # contours is empty - no bricks broken at all
+        max_depth = 0
+        tunnel_open = False
+        all_depths = np.zeros(brick_area.shape[1])
+        return max_depth, tunnel_open, all_depths
+    h_max = 0
+    longest_col = contours[0]
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if h > h_max:
+            longest_col = cnt
+    x, y, w, h = cv2.boundingRect(cnt)
+    max_depth = h
+    tunnel_open = (h >= brick_area.shape[0])
+    all_depths = thresh.sum(axis=0) / 255
+    return max_depth, tunnel_open, all_depths
+
+
+# Find the paddle position in a Breakout-v4 gym environment
+# Assume observation size of (210, 160)
+def get_paddle_position(obs=None, method=cv2.TM_CCOEFF_NORMED):
+    assert(any([obs.shape[0] == 210, obs[1] == 160, obs[2] == 3]))
+    # paddle is always found in the lower part of the observation
+    # set desired area to look for paddle
+    area_X_start = 8
+    area_X_end = 152
+    area_Y_start = 185
+    area_Y_end = 195
+    img = obs[area_Y_start:area_Y_end, area_X_start:area_X_end].copy()
+    # perform threshold on the image
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    et, thresh = cv2.threshold(gray, 50, 255, 1)
+    pad_size = 20
+    thresh = np.pad(thresh, (pad_size, pad_size), 'constant', constant_values=(255, 255))
+    contours, h = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    max_cnt_area = 0
+    center = np.array([(area_Y_start+area_Y_end)/2, (area_X_start+area_X_end)/2])
+    for cnt in contours:
+        approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+        # if there's a containig ellipse to the contour, we'll extract its center
+        if all([len(approx) >= 8, cv2.contourArea(cnt) > max_cnt_area]):
+            max_cnt_area = cv2.contourArea(cnt)
+            M = cv2.moments(cnt)
+            cX = int(M["m10"] / M["m00"]) - pad_size  # X center
+            cY = int(M["m01"] / M["m00"]) - pad_size  # Y center
+            # print("square", cX, cY)
+            cv2.drawContours(img, [cnt], 0, (0, 0, 255), -1)
+            center = np.array([cY+area_Y_start, cX+area_X_start])
+    return center
+
+
 # I tried to implement the get_digit function in a way that extracts the number from each observation.
 # Unfortunately, that doesn't seem to work (segmentation is perfect, but pytesseract fails to accurately
 # detect the digits).
@@ -285,62 +345,3 @@ def get_ball_position(obs=None):
 
 # Analyze the bricks area in a Breakout-v4 gym environment
 # Assume observation size of (210, 160)
-
-
-def get_max_tunnel_depth(obs=None, method=cv2.TM_CCOEFF_NORMED):
-    assert obs is not None
-    assert (any([obs.shape[0] == 210, obs[1] == 160, obs[2] == 3]))
-    # assert obs.shape[0] == 14 and obs.shape[1] == 75
-    brick_area = obs[57:93, 8:-8]
-    gray = cv2.cvtColor(brick_area, cv2.COLOR_BGR2GRAY)
-    et, thresh = cv2.threshold(gray, 50, 255, 1)
-    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if not contours:    # contours is empty - no bricks broken at all
-        max_depth = 0
-        tunnel_open = False
-        all_depths = np.zeros(brick_area.shape[1])
-        return max_depth, tunnel_open, all_depths
-    h_max = 0
-    longest_col = contours[0]
-    for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
-        if h > h_max:
-            longest_col = cnt
-    x, y, w, h = cv2.boundingRect(cnt)
-    max_depth = h
-    tunnel_open = (h >= brick_area.shape[0])
-    all_depths = thresh.sum(axis=0) / 255
-    return max_depth, tunnel_open, all_depths
-
-
-# Find the paddle position in a Breakout-v4 gym environment
-# Assume observation size of (210, 160)
-def get_paddle_position(obs=None, method=cv2.TM_CCOEFF_NORMED):
-    assert(any([obs.shape[0] == 210, obs[1] == 160, obs[2] == 3]))
-    # paddle is always found in the lower part of the observation
-    # set desired area to look for paddle
-    area_X_start = 8
-    area_X_end = 152
-    area_Y_start = 185
-    area_Y_end = 195
-    img = obs[area_Y_start:area_Y_end, area_X_start:area_X_end].copy()
-    # perform threshold on the image
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    et, thresh = cv2.threshold(gray, 50, 255, 1)
-    pad_size = 20
-    thresh = np.pad(thresh, (pad_size, pad_size), 'constant', constant_values=(255, 255))
-    contours, h = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    max_cnt_area = 0
-    center = np.array([(area_Y_start+area_Y_end)/2, (area_X_start+area_X_end)/2])
-    for cnt in contours:
-        approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
-        # if there's a containig ellipse to the contour, we'll extract its center
-        if all([len(approx) >= 8, cv2.contourArea(cnt) > max_cnt_area]):
-            max_cnt_area = cv2.contourArea(cnt)
-            M = cv2.moments(cnt)
-            cX = int(M["m10"] / M["m00"]) - pad_size  # X center
-            cY = int(M["m01"] / M["m00"]) - pad_size  # Y center
-            # print("square", cX, cY)
-            cv2.drawContours(img, [cnt], 0, (0, 0, 255), -1)
-            center = np.array([cY+area_Y_start, cX+area_X_start])
-    return center
