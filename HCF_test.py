@@ -7,7 +7,7 @@ import codecs
 import json
 import cv2
 from matplotlib import pyplot as plt
-from HCF_functions import get_paddle_position, get_max_tunnel_depth, get_ball_position, get_digit
+from HCF_functions import get_paddle_position, get_max_tunnel_depth, get_ball_position
 
 
 # This wrapper extracts Hand Crafted Features from gym observations
@@ -28,6 +28,7 @@ class HCFgymWrapper(gym.ObservationWrapper):
         for func in self.FuncList:
             self.Outputs[func.__name__] = []
         self.Outputs['Score'] = []
+        self.Outputs['Lives'] = []
 
     # This function overrides the observation function of gym.
     # First, the function extracts hand-crafted features, by activating all the
@@ -45,9 +46,9 @@ class HCFgymWrapper(gym.ObservationWrapper):
 
     def step(self, action):
         next_state, reward, done, info = self.env.step(action)
-
         self.acc_reward += reward
         self.Outputs['Score'].append(self.acc_reward)
+        self.Outputs['Lives'].append(info['ale.lives'])
 
         return next_state, reward, done, info
 
@@ -84,8 +85,7 @@ for t in range(T):
 # area_Y_start = 0
 # area_Y_end = 17
 # numbers_area = im[area_Y_start:area_Y_end, :]
-# plt.imshow(obs_list[rnd])
-# plt.suptitle(Wrap.Outputs['Score'][rnd])
+# plt.imshow(obs_list[0])
 # plt.show()
 
 # *************** Uncomment to show results ***************
@@ -105,9 +105,9 @@ for i in range(rows*cols):
         im[int(ballY) - 2:int(ballY) + 2, int(ballX) - 2:int(ballX) + 2, :] = 150
     im[int(cY)-2:int(cY)+2, int(cX)-2:int(cX)+2, :] = 255
     axs.ravel()[i].imshow(im)
-    axs.ravel()[i].set_title("#obs: " + str(rnd) + " max_depth: " + str(max_depth) +
-                             (" tunnel is open" if tunnel_open else " tunnel is closed") +
-                             "\n" + "Score is: " + str(Wrap.Outputs['Score'][rnd]))
+    axs.ravel()[i].set_title("#obs: " + str(rnd) + ", max_depth: " + str(max_depth) +
+                             (", tunnel is open" if tunnel_open else ", tunnel is closed") +
+                             "\n" + "Score is: " + str(Wrap.Outputs['Score'][rnd]) + "\n Lives: " + str(Wrap.Outputs['Lives'][rnd]))
 plt.show()
 
 
