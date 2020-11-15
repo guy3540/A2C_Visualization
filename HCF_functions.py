@@ -38,7 +38,7 @@ def get_ball_position(obs=None):
             # print("square", cX, cY)
             cv2.drawContours(img, [cnt], 0, (0, 0, 255), -1)
             center = np.array([cY + area_Y_start, cX + area_X_start])
-    return center
+    return center.tolist()
     # return max_val, loc, area
 
 
@@ -54,7 +54,7 @@ def get_max_tunnel_depth(obs=None, method=cv2.TM_CCOEFF_NORMED):
         max_depth = 0
         tunnel_open = False
         all_depths = np.zeros(brick_area.shape[1])
-        return max_depth, tunnel_open, all_depths
+        return [max_depth, tunnel_open, all_depths.tolist()]
     h_max = 0
     longest_col = contours[0]
     for cnt in contours:
@@ -65,7 +65,7 @@ def get_max_tunnel_depth(obs=None, method=cv2.TM_CCOEFF_NORMED):
     max_depth = h
     tunnel_open = (h >= brick_area.shape[0])
     all_depths = thresh.sum(axis=0) / 255
-    return max_depth, tunnel_open, all_depths
+    return [max_depth, tunnel_open, all_depths.tolist()]
 
 
 # Find the paddle position in a Breakout-v4 gym environment
@@ -98,7 +98,7 @@ def get_paddle_position(obs=None, method=cv2.TM_CCOEFF_NORMED):
             # print("square", cX, cY)
             cv2.drawContours(img, [cnt], 0, (0, 0, 255), -1)
             center = np.array([cY+area_Y_start, cX+area_X_start])
-    return center
+    return center.tolist()
 
 
 # I tried to implement the get_digit function in a way that extracts the number from each observation.

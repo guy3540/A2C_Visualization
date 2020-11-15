@@ -47,9 +47,15 @@ class HCFgymWrapper(gym.ObservationWrapper):
     def step(self, action):
         next_state, reward, done, info = self.env.step(action)
         self.acc_reward += reward
-        self.Outputs['Score'].append(self.acc_reward)
-        self.Outputs['Lives'].append(info['ale.lives'])
+        if isinstance(self.acc_reward, np.ndarray):
+            self.Outputs['Score'].append(self.acc_reward.tolist())
+        else:
+            self.Outputs['Score'].append(self.acc_reward)
 
+        if isinstance(info['ale.lives'], np.ndarray):
+            self.Outputs['Lives'].append(info['ale.lives'].tolist())
+        else:
+            self.Outputs['Lives'].append(info['ale.lives'])
         return next_state, reward, done, info
 
     def reset(self):
@@ -112,19 +118,19 @@ plt.show()
 
 # *************** Uncomment to close and save results ***************
 
-# Wrap.close()
-#
-# resultsDir = Wrap.resultsDir
-# list_of_files = glob.glob(str(resultsDir+"/*"))     # * means all if need specific format then *.csv
-# latest_file = max(list_of_files, key=os.path.getctime)
-# print("will open this file:"+latest_file)
-#
-# resultsFile = os.path.abspath(latest_file)
-# assert os.path.exists(resultsFile)
-# with open(resultsFile, "r") as read_file:
-#     data = json.load(read_file)
-# data_ndarr = np.array(data['get_padel_position'])
-# print(data_ndarr.shape)
-#
-# rows, cols = np.where(data_ndarr != [7.5, 76.5])
-# print(data_ndarr[rows])
+Wrap.close()  # Write the results file
+
+# Now we'll open the saved file to make sure it looks good
+resultsDir = Wrap.resultsDir
+list_of_files = glob.glob(str(resultsDir+"/*"))     # * means all if need specific format then *.csv
+latest_file = max(list_of_files, key=os.path.getctime)
+print("will open this file:"+latest_file)
+
+resultsFile = os.path.abspath(latest_file)
+assert os.path.exists(resultsFile)
+with open(resultsFile, "r") as read_file:
+    data = json.load(read_file)
+
+# Just an example
+data_ndarr = np.array(data['get_paddle_position'])
+print(data_ndarr.shape)
